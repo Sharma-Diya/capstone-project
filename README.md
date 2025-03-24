@@ -1,10 +1,10 @@
 # Project Title
-CityExplorer / WanderMap 
+WanderMap 
 
 ## Overview
 Full Stack City Guide Application
-CityExplorer would be an interactive platform allowing users to discover and explore cities through local recommendations, personalized itineraries, and authentic experiences.
-
+ Your personalized compass for discovering hidden gems and crafting unforgettable travel adventures.
+ 
 ### Problem Space
 Information Overload
 Travelers are overwhelmed by generic tourist information and countless reviews across multiple platforms. They struggle to filter through endless options to find authentic experiences that match their interests.
@@ -34,7 +34,7 @@ List the functionality that your app will include. These can be written as user 
 
 ### Tech Stack
 
--Html, css, scss, bootstrap
+-Html, css, scss
 - React
 - MySQL
 - Express
@@ -46,7 +46,8 @@ List the functionality that your app will include. These can be written as user 
     - knex
     - express
 -Firebase:
-    -for auth    
+    -for auth
+-Google maps API    
 
 ### APIs
 
@@ -56,8 +57,7 @@ List the functionality that your app will include. These can be written as user 
 ### Sitemap
 
 - Home page
-- Itinerary page
-- Map page
+- Itinerary and Map page
 - City Details screen
 
 # Once above completed (Diving deeper)
@@ -71,51 +71,73 @@ List the functionality that your app will include. These can be written as user 
 Provide visuals of your app's screens. You can use pictures of hand-drawn sketches, or wireframing tools like Figma.
 
 ### Data
-
--- Users Table (for authentication)
-CREATE TABLE users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(255) NOT NULL UNIQUE,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
 -- Cities Table
 CREATE TABLE cities (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT, -- For SQLite; use SERIAL PRIMARY KEY for PostgreSQL or INT AUTO_INCREMENT PRIMARY KEY for MySQL
     name VARCHAR(255) NOT NULL,
-    country VARCHAR(255) NOT NULL,
+    province VARCHAR(255) NOT NULL,
     description TEXT,
+    latitude REAL, -- Or FLOAT depending on the specific SQL dialect
+    longitude REAL, -- Or FLOAT depending on the specific SQL dialect
+    image_url TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Attractions Table
 CREATE TABLE attractions (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    city_id INT NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT, -- For SQLite; use SERIAL PRIMARY KEY for PostgreSQL or INT AUTO_INCREMENT PRIMARY KEY for MySQL
     name VARCHAR(255) NOT NULL,
-    category VARCHAR(255),
     description TEXT,
     address VARCHAR(255),
+    latitude REAL, -- Or FLOAT depending on the specific SQL dialect
+    longitude REAL, -- Or FLOAT depending on the specific SQL dialect
+    category VARCHAR(255) NOT NULL,
+    is_featured BOOLEAN DEFAULT FALSE,
+    city_id INTEGER UNSIGNED NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (city_id) REFERENCES cities(id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+
+-- Itinerary Table
+CREATE TABLE itineraries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, -- For SQLite; use SERIAL PRIMARY KEY for PostgreSQL or INT AUTO_INCREMENT PRIMARY KEY for MySQL
+    city_id INTEGER UNSIGNED NOT NULL,
+    date DATE NOT NULL,
+    name VARCHAR(255),
+    user_id INTEGER UNSIGNED,
+    season VARCHAR(255) DEFAULT 'summer',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (city_id) REFERENCES cities(id) ON DELETE CASCADE
 );
 
--- Itinerary Table
-CREATE TABLE itinerary (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    attraction_id INT NOT NULL,
-    visit_date DATE,
-    notes TEXT,
+--Itinerary_item Table
+CREATE TABLE itinerary_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, -- For SQLite; use SERIAL PRIMARY KEY for PostgreSQL or INT AUTO_INCREMENT PRIMARY KEY for MySQL
+    itinerary_id INTEGER UNSIGNED NOT NULL,
+    time VARCHAR(255) NOT NULL,
+    activity VARCHAR(255),
+    description TEXT,
+    "order" INTEGER NOT NULL, -- Renamed 'order' to avoid potential reserved keyword issues in some SQL dialects
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (attraction_id) REFERENCES attractions(id) ON DELETE CASCADE
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (itinerary_id) REFERENCES itineraries(id) ON DELETE CASCADE
+);
+--Images Table
+CREATE TABLE images (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, -- For SQLite; use SERIAL PRIMARY KEY for PostgreSQL or INT AUTO_INCREMENT PRIMARY KEY for MySQL
+    url VARCHAR(255) NOT NULL,
+    alt_text VARCHAR(255),
+    imageable_type VARCHAR(255) NOT NULL,
+    imageable_id INTEGER UNSIGNED NOT NULL,
+    is_featured BOOLEAN DEFAULT FALSE,
+    display_order INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX imageable_type_imageable_id_index (imageable_type, imageable_id)
 );
 
 ### Endpoints
@@ -147,24 +169,6 @@ Itinerary Endpoints
    * Save attraction to user's itinerary
    * Authentication: Required
    * Request Body: attraction ID, visit date, notes
-
-3. **DELETE /api/itinerary/:id**
-   * Remove attraction from user's itinerary
-   * Authentication: Required
-
-# Once above completed (Diving deeper)
-Users Endpoints
-
-1. **GET /api/users/me**
-   * Get current user profile based on Firebase Auth token
-   * Authentication: Required
-
-2. **POST /api/users**
-   * Register new user in MySQL database after Firebase Auth
-   * Authentication: Required
-   * Request Body: Firebase UID and user information
-
-
 
 ## Roadmap
 - Create client
